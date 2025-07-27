@@ -111,6 +111,8 @@ def get_all_results(params):
 
 if __name__ == "__main__":
 
+    time.sleep(random.randint(0,7200))
+
     # first, find the oldest dated csv file in the curred directory, we are working backwards
     for x in os.listdir():
         if DATE_FINDER.search(x):
