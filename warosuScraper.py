@@ -83,7 +83,10 @@ def extract_info(reply):
         if t:= thumb_from_a(q):
             out["thumb"] = t
     fn = reply.find("span", {"class": "fileinfo break-all"}).getText()
-    filename = FILENAME_GETTER.search(fn).groups()[1].strip()
+    try:
+        filename = FILENAME_GETTER.search(fn).groups()[1].strip()
+    except AttributeError:  # deals with nothing found when the search result doesn't exist
+        filename = ""
     out["filename"] = filename
 
     dat = reply.find("span", {"class": "posttime"}).getText()
@@ -111,7 +114,12 @@ def get_all_results(params):
 
 if __name__ == "__main__":
 
-    time.sleep(random.randint(0,7200))
+    if len(sys.argv) > 1 and sys.argv[1] == "-nosleep":
+        pass
+    else:
+        time.sleep(random.randint(0,3000))
+
+    print("Running at ", datetime.datetime.now().isoformat())
 
     # first, find the oldest dated csv file in the curred directory, we are working backwards
     for x in os.listdir():
@@ -131,12 +139,21 @@ if __name__ == "__main__":
 
     print(f"Found {len(res)} results. Writing csv")
 
+    fieldnames = ["thread", "image", "filename", "date", "thumb"]
+
     with open(f"{datefrom}.csv", "w", newline="", encoding="UTF-8") as f:
         wrt = csv.DictWriter(f,
-                             fieldnames=["thread", "image", "filename", "date", "thumb"],
+                             fieldnames=fieldnames,
                              delimiter="\x1E")  # ASCII record separator character
         wrt.writeheader()
 
         for q in res:
-            infos = extract_info(q)
+            try:
+                infos = extract_info(q)
+            except:
+                infos = {x:"" for x in fieldnames}
+                # just prioritize writing SOMETHING rather than discard the entire file
+
             wrt.writerow(infos)
+
+    print("Finished at ", datetime.datetime.now().isoformat())
